@@ -1,14 +1,31 @@
 import React, { useState } from "react";
 import { Editor } from "@tinymce/tinymce-react";
+import { v4 as uuidv4 } from "uuid";
+import db from "../firebase";
+import firebase from "firebase";
 
-const TextEditor = () => {
+const TextEditor = ({ bc, sbc, username, img }) => {
+  const [input, setTyping] = useState("");
   const [text, setText] = useState("");
   const handleEditorChange = (content, editor) => {
     setText(content);
   };
+  function convertDate() {
+    // Time
+    let time = new Date().toLocaleTimeString();
+    let x = time.split(":");
+    let finalTime = x[0] + ":" + x[1] + " " + time[time.length - 2] + time[time.length - 1];
+
+    // Date
+    let date = new Date().toString();
+    let res = date.split(" ");
+    let finalDate = res[0] + " " + " " + res[2] + " " + res[1] + " " + res[3];
+
+    return finalTime + " - " + finalDate;
+  }
   return (
     <div className="textEditor">
-      <input type="text" className="titleInput" placeholder="Note Title..." />
+      <input type="text" className="titleInput" placeholder="Note Title..." value={input} onChange={(e) => setTyping(e.target.value)} />
       <Editor
         initialValue="<p>Write your note here! 😊</p>"
         init={{
@@ -55,7 +72,44 @@ const TextEditor = () => {
         }}
         onEditorChange={handleEditorChange}
       />
-      <button onClick={() => console.log(text)} className="addNote">
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          let collection = "";
+          const myParam = window.location.href;
+          const res = myParam.split("/");
+          const final = res[res.length - 1];
+          switch (final) {
+            case "businessCommunication":
+              collection = "firstNote";
+              break;
+            case "modernProgrammingLanguage":
+              collection = "secondNote";
+              break;
+            case "visualProgramming":
+              collection = "thirdNote";
+              break;
+            case "compOrgAndAssemblyLanguage":
+              collection = "fourthNote";
+              break;
+            case "dataStructureAndAlgorithm":
+              collection = "fifthNote";
+              break;
+          }
+          console.log(collection);
+          db.collection(collection).add({
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            id: uuidv4(),
+            username: username,
+            time: convertDate(),
+            img: img,
+            title: input,
+            text: text,
+          });
+          setTyping("");
+        }}
+        className="addNote"
+      >
         Add Note <i className="fa fa-plus" style={{ marginLeft: "10px" }}></i>
       </button>
     </div>
